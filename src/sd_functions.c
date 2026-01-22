@@ -66,33 +66,44 @@ static void DESELECT(SD_Context *ctx)
   HAL_Delay(1);
 }
 
+/* Wait for DMA to complete */
+static void SPI_WaitDMA(SD_Context *ctx)
+{
+  while (ctx->dma_complete == 0) {
+    __NOP();
+  }
+}
+
 /* SPI transmit a byte */
 static void SPI_TxByte(SD_Context *ctx, uint8_t data)
 {
-  if (ctx->dma_complete == 1) {
-    ctx->dma_complete = 0;
-    HAL_SPI_Transmit_DMA(ctx->spi_handle, &data, 1);
-  }
+  static uint8_t tx_byte;
+  SPI_WaitDMA(ctx);
+  tx_byte = data;
+  ctx->dma_complete = 0;
+  HAL_SPI_Transmit_DMA(ctx->spi_handle, &tx_byte, 1);
 }
 
 /* SPI transmit buffer */
 static void SPI_TxBuffer(SD_Context *ctx, uint8_t *buffer, uint16_t len)
 {
-  if (ctx->dma_complete == 1) {
-    ctx->dma_complete = 0;
-    HAL_SPI_Transmit_DMA(ctx->spi_handle, buffer, len);
-  }
+  SPI_WaitDMA(ctx);
+  ctx->dma_complete = 0;
+  HAL_SPI_Transmit_DMA(ctx->spi_handle, buffer, len);
 }
 
 /* SPI receive a byte */
 static uint8_t SPI_RxByte(SD_Context *ctx)
 {
-  uint8_t dummy = 0xFF, data = 0xFF;
-
-  if (ctx->dma_complete == 1) {
-    ctx->dma_complete = 0;
-    HAL_SPI_TransmitReceive_DMA(ctx->spi_handle, &dummy, &data, 1);
-  }
+  static uint8_t dummy;
+  static uint8_t data;
+  
+  SPI_WaitDMA(ctx);
+  dummy = 0xFF;
+  data = 0xFF;
+  ctx->dma_complete = 0;
+  HAL_SPI_TransmitReceive_DMA(ctx->spi_handle, &dummy, &data, 1);
+  SPI_WaitDMA(ctx);
   
   return data;
 }
