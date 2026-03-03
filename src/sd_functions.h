@@ -66,6 +66,9 @@ typedef enum {
 #define CT_BLOCK  0x08    /* Block addressing */
 
 #define SPI_TIMEOUT 100
+#define SD_DMA_TIMEOUT_MS 50
+#define SD_SPI_INIT_PRESCALER SPI_BAUDRATEPRESCALER_128
+#define SD_SPI_TRANSFER_PRESCALER SPI_BAUDRATEPRESCALER_4
 
 /* SD Card Context - holds all configuration and state */
 typedef struct {
