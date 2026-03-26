@@ -4,7 +4,8 @@ This project is a fork of a ControllersTech tutorial [[https://www.youtube.com/w
 The library uses a context-based API for easy integration and supports multiple SD card instances.
 
 * Features
-- DMA-based SPI communication for efficient data transfer
+- Hybrid SPI path: polling for command bytes, DMA for 512-byte sector payloads
+- Semihosting logs are emitted for driver error paths
 - Context struct for configuration (no compile-time macros needed)
 - Standalone library - no FatFS dependency required
 - Compatible with FatFS diskio interface
@@ -125,4 +126,10 @@ DRESULT disk_ioctl(BYTE pdrv, BYTE cmd, void* buff) {
 #+end_src
 
 * How it Works
-The library uses DMA for SPI Send and Receive operations. A =dma_complete= flag in the context is managed by the SPI callbacks to ensure each transaction completes before the next one starts. Timer callbacks provide timeout functionality for SD card operations.
+The library uses blocking SPI transfers for command, status, CRC, and clock bytes so short
+transactions complete before the stack frame changes. 512-byte sector payloads use DMA, and
+the =dma_complete= flag is paired with a timeout guard so stalled DMA transfers are aborted
+cleanly instead of hanging the driver. During card init the driver forces a safe low SPI
+prescaler, then switches to a fast transfer prescaler after initialization completes. The
+library emits semihosting messages for DMA timeouts, bad data tokens, command timeouts,
+and init failures in every build unless =SD_SEMIHOST_LOG=0= is defined at compile time.

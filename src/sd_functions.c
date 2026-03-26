@@ -1,7 +1,7 @@
 #include "sd_functions.h"
 
 #ifndef SD_SEMIHOST_LOG
-#define SD_SEMIHOST_LOG 1
+//#define SD_SEMIHOST_LOG 1
 #endif
 
 static const uint8_t sd_dma_dummy_tx[512] = {
